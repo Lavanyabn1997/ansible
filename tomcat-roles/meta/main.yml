@@ -1,0 +1,42 @@
+# Define role dependencies
+# Provide role info (author, description, platforms)
+# Used when sharing roles (like Ansible Galaxy)
+
+galaxy_info:
+  author: lavanya
+  description: Install and configure web server
+  company: mycompany
+
+  license: MIT
+
+  min_ansible_version: 2.9
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy
+
+  galaxy_tags:
+    - web
+    - nginx
+    - apache
+    
+ dependencies:
+  - role: java
+  - role: tomcat
+  
+# roles/apps/meta/main.yml 
+# Before running apps role:
+# java role runs first
+# tomcat role runs next
+# roles/
+ └── apps/
+      └── meta/
+           └── main.yml
+
+
+ 
+    
+
+    
