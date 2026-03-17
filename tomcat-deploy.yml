@@ -1,0 +1,101 @@
+- name: Install and Configure Tomcat
+  hosts: appservers
+  become: yes
+
+  vars:
+    tomcat_version: 9.0.85
+    tomcat_user: tomcat
+    tomcat_dir: /opt/tomcat
+    war_file: /home/ubuntu/app.war
+
+  tasks:
+
+    - name: Install Java
+      apt:
+        name: openjdk-17-jdk
+        state: present
+        update_cache: yes
+
+    - name: Create Tomcat group
+      group:
+        name: "{{ tomcat_user }}"
+
+    - name: Create Tomcat user
+      user:
+        name: "{{ tomcat_user }}"
+        group: "{{ tomcat_user }}"
+        home: "{{ tomcat_dir }}"
+        shell: /bin/false
+
+    - name: Download Tomcat
+      get_url:
+        url: "https://archive.apache.org/dist/tomcat/tomcat-9/v{{ tomcat_version }}/bin/apache-tomcat-{{ tomcat_version }}.tar.gz"
+        dest: /tmp/tomcat.tar.gz
+
+    - name: Create Tomcat directory
+      file:
+        path: "{{ tomcat_dir }}"
+        state: directory
+
+    - name: Extract Tomcat
+      unarchive:
+        src: /tmp/tomcat.tar.gz
+        dest: "{{ tomcat_dir }}"
+        remote_src: yes
+        extra_opts: [--strip-components=1]
+
+    - name: Set permissions
+      file:
+        path: "{{ tomcat_dir }}"
+        owner: "{{ tomcat_user }}"
+        group: "{{ tomcat_user }}"
+        recurse: yes
+
+    - name: Deploy WAR file
+      copy:
+        src: "{{ war_file }}"
+        dest: "{{ tomcat_dir }}/webapps/app.war"
+        owner: "{{ tomcat_user }}"
+        group: "{{ tomcat_user }}"
+      notify: Restart Tomcat
+
+    - name: Create systemd service
+      copy:
+        dest: /etc/systemd/system/tomcat.service
+        content: |
+          [Unit]
+          Description=Apache Tomcat
+          After=network.target
+
+          [Service]
+          Type=forking
+          User={{ tomcat_user }}
+          Group={{ tomcat_user }}
+
+          Environment=JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+          Environment=CATALINA_HOME={{ tomcat_dir }}
+          Environment=CATALINA_BASE={{ tomcat_dir }}
+
+          ExecStart={{ tomcat_dir }}/bin/startup.sh
+          ExecStop={{ tomcat_dir }}/bin/shutdown.sh
+
+          Restart=always
+
+          [Install]
+          WantedBy=multi-user.target
+      notify: Reload systemd
+
+    - name: Start and enable Tomcat
+      systemd:
+        name: tomcat
+        state: started
+        enabled: yes
+
+  handlers:
+    - name: Restart Tomcat
+      systemd:
+        name: tomcat
+        state: restarted
+
+    - name: Reload systemd
+      command: systemctl daemon-reexec
