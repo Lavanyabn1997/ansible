@@ -1,0 +1,74 @@
+- name: Install and Configure Nginx
+  hosts: webservers
+  become: yes
+
+  vars:
+    server_name: myapp.example.com
+    web_root: /var/www/myapp
+
+  tasks:
+
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Create web root directory
+      file:
+        path: "{{ web_root }}"
+        state: directory
+        mode: '0755'
+
+    - name: Deploy sample index.html
+      copy:
+        dest: "{{ web_root }}/index.html"
+        content: |
+          <html>
+          <head><title>Welcome</title></head>
+          <body>
+            <h1>Deployed via Ansible</h1>
+          </body>
+          </html>
+
+    - name: Configure Nginx virtual host
+      copy:
+        dest: /etc/nginx/sites-available/myapp.conf
+        content: |
+          server {
+              listen 80;
+              server_name {{ server_name }};
+
+              root {{ web_root }};
+              index index.html;
+
+              location / {
+                  try_files $uri $uri/ =404;
+              }
+          }
+      notify: Restart Nginx
+
+    - name: Enable site
+      file:
+        src: /etc/nginx/sites-available/myapp.conf
+        dest: /etc/nginx/sites-enabled/myapp.conf
+        state: link
+      notify: Restart Nginx
+
+    - name: Remove default site
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: Restart Nginx
+
+    - name: Ensure Nginx is running
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+  handlers:
+    - name: Restart Nginx
+      service:
+        name: nginx
+        state: restarted
