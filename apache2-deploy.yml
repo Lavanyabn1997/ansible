@@ -1,0 +1,70 @@
+- name: Install and Configure Apache
+  hosts: webservers
+  become: yes
+
+  vars:
+    server_name: myapp.example.com
+    web_root: /var/www/myapp
+
+  tasks:
+
+    - name: Install Apache2
+      apt:
+        name: apache2
+        state: present
+        update_cache: yes
+
+    - name: Create web root directory
+      file:
+        path: "{{ web_root }}"
+        state: directory
+        mode: '0755'
+
+    - name: Deploy index.html
+      copy:
+        dest: "{{ web_root }}/index.html"
+        content: |
+          <html>
+          <head><title>Apache Page</title></head>
+          <body>
+            <h1>Apache deployed via Ansible</h1>
+          </body>
+          </html>
+
+    - name: Configure Virtual Host
+      copy:
+        dest: "/etc/apache2/sites-available/myapp.conf"
+        content: |
+          <VirtualHost *:80>
+              ServerName {{ server_name }}
+              DocumentRoot {{ web_root }}
+
+              <Directory {{ web_root }}>
+                  AllowOverride All
+                  Require all granted
+              </Directory>
+
+              ErrorLog ${APACHE_LOG_DIR}/error.log
+              CustomLog ${APACHE_LOG_DIR}/access.log combined
+          </VirtualHost>
+      notify: Restart Apache
+
+    - name: Enable site
+      command: a2ensite myapp.conf
+      notify: Restart Apache
+
+    - name: Disable default site
+      command: a2dissite 000-default.conf
+      notify: Restart Apache
+
+    - name: Ensure Apache is running
+      service:
+        name: apache2
+        state: started
+        enabled: yes
+
+  handlers:
+    - name: Restart Apache
+      service:
+        name: apache2
+        state: restarted
