@@ -1,23 +1,36 @@
-# ansible
-Ansible_automation
-ansible automation Ansible Installation steps on Ubuntu Instance
+# Ansible_automation
+ansible automation
+Ansible Installation steps on Ubuntu Instance
 
 https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-ansible-on-ubuntu-20-04
 
-Ansible windows setup ref:
-Link: https://www.devopsschool.com/tutorial/ansible/ansible-windows-adhoc-commands.html#Program1
 
-Ansible Master → Windows EC2 Configuration Guide
-This document explains how to configure Ansible on Ubuntu to manage a Windows EC2 instance using WinRM over HTTPS (port 5986).
+#### Ansible windows setup ref:
 
-🏗️ Architecture
-Component	OS	Role
-Ansible Master	Ubuntu EC2	Control Node
-Target Server	Windows EC2	Managed Node
-Protocol	WinRM HTTPS	Communication
-Port	5986	Secure WinRM
-🚀 PART 1 — Ubuntu (Ansible Master) Setup
-1. Install Ansible
+
+**Link**:  https://www.devopsschool.com/tutorial/ansible/ansible-windows-adhoc-commands.html#Program1
+
+# Ansible Master → Windows EC2 Configuration Guide
+
+This document explains how to configure **Ansible on Ubuntu** to manage a **Windows EC2 instance** using **WinRM over HTTPS (port 5986)**.
+
+---
+
+## 🏗️ Architecture
+
+| Component | OS | Role |
+|-----------|----|------|
+| Ansible Master | Ubuntu EC2 | Control Node |
+| Target Server | Windows EC2 | Managed Node |
+| Protocol | WinRM HTTPS | Communication |
+| Port | 5986 | Secure WinRM |
+
+---
+
+# 🚀 PART 1 — Ubuntu (Ansible Master) Setup
+
+### 1. Install Ansible
+```bash
 sudo apt update
 sudo apt install ansible -y
 
@@ -128,4 +141,4 @@ $ ansible win -i inventory -m raw -a "dir"
 $ ansible win -i inventory -m win_service -a "name=spooler"
 $ ansible win -i inventory -m win_service -a "name=spooler state=stopped"
 $ ansible win -i inventory -m win_service -a "name=spooler"
-$ ansible win -i inventory -m win_feature -a "name=Telnet-Client state=present"    
+$ ansible win -i inventory -m win_feature -a "name=Telnet-Client state=present"      
